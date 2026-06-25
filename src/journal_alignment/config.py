@@ -13,15 +13,15 @@ class ProjectConfig:
     """
 
     articles_path: Path = field(
-        default_factory=lambda: Path("data/raw/articles_pubmed.csv")
+        default_factory=lambda: Path("../data/raw/articles_pubmed.csv")
     )
     aims_scope_path: Path = field(
-        default_factory=lambda: Path("data/raw/aims_scope.txt")
+        default_factory=lambda: Path("../data/raw/aims_scope.txt")
     )
-    processed_dir: Path = field(default_factory=lambda: Path("data/processed"))
-    results_dir: Path = field(default_factory=lambda: Path("data/results"))
-    figures_dir: Path = field(default_factory=lambda: Path("reports/figures"))
-    tables_dir: Path = field(default_factory=lambda: Path("reports/tables"))
+    processed_dir: Path = field(default_factory=lambda: Path("../data/processed"))
+    results_dir: Path = field(default_factory=lambda: Path("../data/results"))
+    figures_dir: Path = field(default_factory=lambda: Path("../reports/figures"))
+    tables_dir: Path = field(default_factory=lambda: Path("../reports/tables"))
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     top_n: int = 10
     min_abstract_length: int = 50
