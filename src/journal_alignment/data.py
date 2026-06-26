@@ -175,7 +175,12 @@ class ArticleDataset:
             raise FileNotFoundError(
                 f"Aims & Scope TXT file does not exist: {self.aims_scope_path}"
             )
-        return self.aims_scope_path.read_text(encoding="utf-8").strip()
+        aims_scope = self.aims_scope_path.read_text(encoding="utf-8").strip()
+        if not aims_scope:
+            raise ValueError(
+                f"Aims & Scope TXT file is empty: {self.aims_scope_path}"
+            )
+        return aims_scope
 
     def validate_articles(self, df: pd.DataFrame) -> pd.DataFrame:
         """Validate and clean article rows needed by later project steps."""

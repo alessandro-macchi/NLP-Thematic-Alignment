@@ -58,14 +58,5 @@ def main() -> None:
     print(f"Saved {len(df)} PubMed articles to {output_path}")
 
 
-"""
-python scripts/fetch_pubmed_articles.py `
->>   --journal-name "World Journal of Orthopedics" `                                                                                           
->>   --output-path data/raw/articles_pubmed.csv `                                                                                                   
->>   --start-year 2016 `                                                                                                                            
->>   --end-year 2026 `                                                                                                                              
->>   --max-results 5000  
-"""
-
 if __name__ == "__main__":
     main()
