@@ -9,6 +9,29 @@ import numpy as np
 import pandas as pd
 
 
+TITLE_KWARGS = {"fontsize": 13, "fontweight": "bold", "pad": 12}
+LABEL_KWARGS = {"fontsize": 10}
+PRIMARY_COLOR = "#2F6F9F"
+SECONDARY_COLOR = "#6AA84F"
+ACCENT_COLOR = "#C04F4A"
+POINT_COLOR = "#3F7FBF"
+
+
+def _style_axes(ax: plt.Axes, grid_axis: str = "both") -> None:
+    """Apply consistent non-data styling to a Matplotlib axis."""
+
+    ax.set_axisbelow(True)
+    ax.set_facecolor("#FAFAFA")
+    ax.tick_params(axis="both", labelsize=9, colors="#4A4A4A")
+    ax.grid(axis=grid_axis, color="#D9D9D9", linewidth=0.8, alpha=0.65)
+
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    for spine in ("left", "bottom"):
+        ax.spines[spine].set_color("#BFBFBF")
+        ax.spines[spine].set_linewidth(0.8)
+
+
 def _prepare_output_path(output_path: str | Path) -> Path:
     """Create parent directories and return ``output_path`` as a Path."""
 
@@ -86,11 +109,17 @@ def plot_alignment_histogram(
 
     fig, ax = plt.subplots(figsize=(7, 4.5))
     try:
-        ax.hist(scores, bins=20, color="#4C72B0", edgecolor="white")
-        ax.set_title("Distribution of Alignment Scores")
-        ax.set_xlabel("Alignment score")
-        ax.set_ylabel("Number of articles")
-        ax.grid(axis="y", alpha=0.25)
+        ax.hist(
+            scores,
+            bins=20,
+            color=PRIMARY_COLOR,
+            edgecolor="white",
+            linewidth=0.9,
+        )
+        ax.set_title("Distribution of Alignment Scores", **TITLE_KWARGS)
+        ax.set_xlabel("Alignment score", **LABEL_KWARGS)
+        ax.set_ylabel("Number of articles", **LABEL_KWARGS)
+        _style_axes(ax, grid_axis="y")
         fig.tight_layout()
         fig.savefig(path, dpi=300, bbox_inches="tight")
     finally:
@@ -113,23 +142,27 @@ def plot_alignment_boxplot(
             scores,
             vert=True,
             patch_artist=True,
-            boxprops={"facecolor": "#55A868", "edgecolor": "#333333"},
-            medianprops={"color": "#C44E52", "linewidth": 2},
-            whiskerprops={"color": "#333333"},
-            capprops={"color": "#333333"},
+            boxprops={
+                "facecolor": SECONDARY_COLOR,
+                "edgecolor": "#333333",
+                "linewidth": 1.1,
+            },
+            medianprops={"color": ACCENT_COLOR, "linewidth": 2},
+            whiskerprops={"color": "#333333", "linewidth": 1.1},
+            capprops={"color": "#333333", "linewidth": 1.1},
             flierprops={
                 "marker": "o",
-                "markerfacecolor": "#8172B3",
+                "markerfacecolor": POINT_COLOR,
                 "markeredgecolor": "#333333",
                 "markersize": 4,
-                "alpha": 0.75,
+                "alpha": 0.7,
             },
         )
-        ax.set_title("Alignment Score Spread")
-        ax.set_ylabel("Alignment score")
+        ax.set_title("Alignment Score Spread", **TITLE_KWARGS)
+        ax.set_ylabel("Alignment score", **LABEL_KWARGS)
         ax.set_xticks([1])
         ax.set_xticklabels(["Articles"])
-        ax.grid(axis="y", alpha=0.25)
+        _style_axes(ax, grid_axis="y")
         fig.tight_layout()
         fig.savefig(path, dpi=300, bbox_inches="tight")
     finally:
@@ -156,14 +189,16 @@ def plot_alignment_by_year(
         ax.plot(
             yearly_scores["year"],
             yearly_scores[score_column],
-            color="#4C72B0",
+            color=PRIMARY_COLOR,
             marker="o",
-            linewidth=1.8,
+            markerfacecolor="white",
+            markeredgewidth=1.2,
+            linewidth=2,
         )
-        ax.set_title("Average Alignment Score by Year")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Average alignment score")
-        ax.grid(alpha=0.25)
+        ax.set_title("Average Alignment Score by Year", **TITLE_KWARGS)
+        ax.set_xlabel("Year", **LABEL_KWARGS)
+        ax.set_ylabel("Average alignment score", **LABEL_KWARGS)
+        _style_axes(ax)
         fig.tight_layout()
         fig.savefig(path, dpi=300, bbox_inches="tight")
     finally:
@@ -185,15 +220,16 @@ def plot_article_scores_by_year(
         ax.scatter(
             working["year"],
             working[score_column],
-            color="#4C72B0",
-            alpha=0.65,
-            edgecolors="none",
+            color=POINT_COLOR,
+            alpha=0.7,
+            edgecolors="white",
+            linewidths=0.35,
             s=28,
         )
-        ax.set_title("Article Alignment Scores by Year")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Alignment score")
-        ax.grid(alpha=0.25)
+        ax.set_title("Article Alignment Scores by Year", **TITLE_KWARGS)
+        ax.set_xlabel("Year", **LABEL_KWARGS)
+        ax.set_ylabel("Alignment score", **LABEL_KWARGS)
+        _style_axes(ax)
         fig.tight_layout()
         fig.savefig(path, dpi=300, bbox_inches="tight")
     finally:
@@ -232,11 +268,11 @@ def plot_embedding_pca(
             s=28,
         )
         colorbar = fig.colorbar(scatter, ax=ax)
-        colorbar.set_label("Year")
-        ax.set_title("PCA Projection of Article Embeddings")
-        ax.set_xlabel("Principal component 1")
-        ax.set_ylabel("Principal component 2")
-        ax.grid(alpha=0.25)
+        colorbar.set_label("Year", **LABEL_KWARGS)
+        ax.set_title("PCA Projection of Article Embeddings", **TITLE_KWARGS)
+        ax.set_xlabel("Principal component 1", **LABEL_KWARGS)
+        ax.set_ylabel("Principal component 2", **LABEL_KWARGS)
+        _style_axes(ax)
         fig.tight_layout()
         fig.savefig(path, dpi=300, bbox_inches="tight")
     finally:
