@@ -24,6 +24,7 @@ class BERTopicAnalysisResult:
     article_topics: pd.DataFrame
     topic_summary: pd.DataFrame
     topic_diagnostics: pd.DataFrame
+    noise_diagnostics: pd.DataFrame
     topics_over_time: pd.DataFrame
     noise_cluster_size: int
 
@@ -79,11 +80,13 @@ def run_bertopic_analysis(
     )
 
     noise_cluster_size = int((topics == -1).sum())
+    noise_cluster_share = noise_cluster_size / len(topics)
     LOGGER.info("BERTopic noise cluster size: %s articles", noise_cluster_size)
     topic_diagnostics = pd.DataFrame(
         {
             "metric": [
                 "noise_cluster_size",
+                "noise_cluster_share",
                 "topics_excluding_noise",
                 "distinct_years",
                 "topics_over_time_nr_bins",
@@ -92,6 +95,7 @@ def run_bertopic_analysis(
             ],
             "value": [
                 noise_cluster_size,
+                noise_cluster_share,
                 int((topic_summary["topic_id"] != -1).sum()),
                 int(nr_bins),
                 int(nr_bins),
@@ -105,6 +109,7 @@ def run_bertopic_analysis(
         article_topics=article_topics,
         topic_summary=topic_summary,
         topic_diagnostics=topic_diagnostics,
+        noise_diagnostics=build_noise_diagnostics(article_topics),
         topics_over_time=topics_over_time,
         noise_cluster_size=noise_cluster_size,
     )
@@ -239,7 +244,9 @@ def build_outlier_topic_assignments(
         "bertopic_topic_keywords",
         "bertopic_topic_label",
     ]
-    missing_columns = [column for column in required_columns if column not in df.columns]
+    missing_columns = [
+        column for column in required_columns if column not in df.columns
+    ]
     if missing_columns:
         missing = "', '".join(missing_columns)
         raise ValueError(f"Column '{missing}' is missing from the DataFrame.")
@@ -273,6 +280,62 @@ def build_outlier_topic_assignments(
         if column in outliers.columns
     ]
     return outliers[preferred_columns].reset_index(drop=True)
+
+
+def build_noise_diagnostics(
+    df: pd.DataFrame,
+    text_column: str = "abstract",
+    noise_column: str = "bertopic_is_noise",
+    score_column: str = "alignment_score",
+    keywords_column: str = "keywords",
+    top_n_keywords: int = 8,
+) -> pd.DataFrame:
+    """Summarize BERTopic noise articles against clustered articles."""
+
+    required_columns = [text_column, noise_column]
+    missing_columns = [
+        column for column in required_columns if column not in df.columns
+    ]
+    if missing_columns:
+        missing = "', '".join(missing_columns)
+        raise ValueError(f"Column '{missing}' is missing from the DataFrame.")
+    if top_n_keywords < 1:
+        raise ValueError("top_n_keywords must be at least 1.")
+
+    working = df.copy()
+    working["_abstract_characters"] = working[text_column].astype("string").str.len()
+    working["_abstract_words"] = (
+        working[text_column].astype("string").str.split().str.len()
+    )
+    noise_flags = _boolean_series(working[noise_column])
+
+    rows = []
+    for is_noise, group_label in [
+        (False, "clustered_articles"),
+        (True, "noise_articles"),
+    ]:
+        group = working[noise_flags.eq(is_noise)]
+        rows.append(
+            {
+                "bertopic_group": group_label,
+                "article_count": int(len(group)),
+                "article_share": _safe_share(len(group), len(working)),
+                "mean_abstract_words": _safe_mean(group["_abstract_words"]),
+                "median_abstract_words": _safe_median(group["_abstract_words"]),
+                "mean_abstract_characters": _safe_mean(group["_abstract_characters"]),
+                "median_abstract_characters": _safe_median(
+                    group["_abstract_characters"]
+                ),
+                "mean_alignment_score": _optional_mean(group, score_column),
+                "frequent_author_keywords": _top_semicolon_terms(
+                    group,
+                    column=keywords_column,
+                    n=top_n_keywords,
+                ),
+            }
+        )
+
+    return pd.DataFrame(rows)
 
 
 def plot_topics_over_time(
@@ -503,6 +566,62 @@ def _topic_label_lookup(topic_summary: pd.DataFrame) -> dict[int, str]:
     }
 
 
+def _safe_share(part: int, total: int) -> float:
+    if total == 0:
+        return 0.0
+    return float(part / total)
+
+
+def _safe_mean(values: pd.Series) -> float:
+    if values.empty:
+        return float("nan")
+    return float(pd.to_numeric(values, errors="coerce").mean())
+
+
+def _safe_median(values: pd.Series) -> float:
+    if values.empty:
+        return float("nan")
+    return float(pd.to_numeric(values, errors="coerce").median())
+
+
+def _optional_mean(df: pd.DataFrame, column: str) -> float:
+    if column not in df.columns or df.empty:
+        return float("nan")
+    return float(pd.to_numeric(df[column], errors="coerce").mean())
+
+
+def _boolean_series(series: pd.Series) -> pd.Series:
+    if pd.api.types.is_bool_dtype(series):
+        return series.fillna(False).astype(bool)
+
+    normalized = series.astype("string").str.strip().str.lower()
+    valid_values = {"true", "false", "1", "0", "yes", "no"}
+    invalid_values = normalized.dropna()[~normalized.dropna().isin(valid_values)]
+    if not invalid_values.empty:
+        raise ValueError("noise_column must contain boolean-like values.")
+    return normalized.isin({"true", "1", "yes"})
+
+
+def _top_semicolon_terms(df: pd.DataFrame, column: str, n: int) -> str:
+    if column not in df.columns or df.empty:
+        return ""
+
+    terms = (
+        df[column]
+        .dropna()
+        .astype("string")
+        .str.split(";")
+        .explode()
+        .dropna()
+        .str.strip()
+    )
+    terms = terms[terms.ne("")]
+    if terms.empty:
+        return ""
+
+    return "; ".join(terms.str.lower().value_counts().head(n).index.tolist())
+
+
 def _timestamp_sort_key(timestamp: object) -> tuple[float, str]:
     numeric_timestamp = pd.to_numeric(pd.Series([timestamp]), errors="coerce").iloc[0]
     if pd.notna(numeric_timestamp):
@@ -529,6 +648,7 @@ def _style_topic_axes(ax: plt.Axes) -> None:
 __all__ = [
     "BERTopicAnalysisResult",
     "add_topic_assignments",
+    "build_noise_diagnostics",
     "build_outlier_topic_assignments",
     "check_bertopic_dependencies",
     "label_topics_over_time_with_publication_years",

@@ -1,7 +1,8 @@
 metric,value
-noise_cluster_size,267
-topics_excluding_noise,9
-distinct_years,11
-topics_over_time_nr_bins,11
-umap_random_state,6
-hdbscan_min_cluster_size,15
+noise_cluster_size,267.0
+noise_cluster_share,0.24272727272727274
+topics_excluding_noise,9.0
+distinct_years,11.0
+topics_over_time_nr_bins,11.0
+umap_random_state,6.0
+hdbscan_min_cluster_size,15.0

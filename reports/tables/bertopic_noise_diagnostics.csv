@@ -1,0 +1,3 @@
+bertopic_group,article_count,article_share,mean_abstract_words,median_abstract_words,mean_abstract_characters,median_abstract_characters,mean_alignment_score,frequent_author_keywords
+clustered_articles,833,0.7572727272727273,240.52581032412965,235.0,1637.3541416566627,1617.0,0.3464586966390489,case report; total hip arthroplasty; osteoarthritis; total knee arthroplasty; arthroplasty; knee; fracture; surgery
+noise_articles,267,0.24272727272727274,247.17228464419475,238.0,1684.0486891385767,1629.0,0.33067399990445956,case report; osteoporosis; knee; arthroplasty; total knee arthroplasty; hip fracture; epidemiology; surgery

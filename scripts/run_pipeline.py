@@ -93,11 +93,16 @@ def main() -> None:
     print(f"Tables saved to: {config.tables_dir}")
     print(f"Figures saved to: {config.figures_dir}")
     if config.run_topic_model and "bertopic_topic_diagnostics" in results:
-        noise_size = results["bertopic_topic_diagnostics"].loc[
-            results["bertopic_topic_diagnostics"]["metric"] == "noise_cluster_size",
+        topic_diagnostics = results["bertopic_topic_diagnostics"]
+        noise_size = topic_diagnostics.loc[
+            topic_diagnostics["metric"] == "noise_cluster_size",
             "value",
         ].iloc[0]
-        print(f"BERTopic noise cluster size: {noise_size}")
+        noise_share = topic_diagnostics.loc[
+            topic_diagnostics["metric"] == "noise_cluster_share",
+            "value",
+        ].iloc[0]
+        print(f"BERTopic noise cluster size: {noise_size} ({float(noise_share):.1%})")
 
 
 if __name__ == "__main__":

@@ -113,6 +113,7 @@ class AlignmentPipeline:
         if topic_results is not None:
             results["bertopic_topic_summary"] = topic_results.topic_summary
             results["bertopic_topic_diagnostics"] = topic_results.topic_diagnostics
+            results["bertopic_noise_diagnostics"] = topic_results.noise_diagnostics
             results["bertopic_topics_over_time"] = topic_results.topics_over_time
             results["outlier_topic_assignments"] = build_outlier_topic_assignments(
                 results["alignment_scores"]
@@ -148,6 +149,8 @@ class AlignmentPipeline:
             / "bertopic_topic_summary.csv",
             "bertopic_topic_diagnostics": self.config.tables_dir
             / "bertopic_topic_diagnostics.csv",
+            "bertopic_noise_diagnostics": self.config.tables_dir
+            / "bertopic_noise_diagnostics.csv",
             "bertopic_topics_over_time": self.config.tables_dir
             / "bertopic_topics_over_time.csv",
             "outlier_topic_assignments": self.config.tables_dir
